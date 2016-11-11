@@ -24,7 +24,7 @@ class Kutil:
         if privkey is not None:
             self.keypair = PrivateKey(unhexlify(privkey))
 
-        if (privkey and wif and seed) is None:
+        if privkey == wif == seed == None:
             self.keypair = PrivateKey() # new keypair
 
         if network is None:
@@ -39,7 +39,7 @@ class Kutil:
     def load_network_parameters(self, query):
         '''loads network parameters and sets class variables'''
 
-        (self._network_name, self._network_shortname, self._subnet_name,
+        (self._network_name, self._network_shortname,
          self._pubkeyhash, self._wif_prefix, self._scripthash,
          self._magicbytes) = tuple(networks.query(query))
 
@@ -47,42 +47,61 @@ class Kutil:
     def privkey(self):
         '''retrun privkey in hex format'''
 
-        return hexlify(self._privkey)
+        return hexlify(self._privkey).decode("utf-8")
 
     @property
     def pubkey(self):
         '''return compressed pubkey in hex format'''
 
-        return hexlify(self._pubkey_compressed)
+        return hexlify(self._pubkey_compressed).decode("utf-8")
 
-    @property
-    def address(self):
+    def address(self, compressed=False):
         '''generate an address from pubkey'''
 
-        step1 = unhexlify(self._pubkeyhash + hexlify(
-            new('ripemd160', sha256(self._pubkey).digest()).
-            digest())
-                         )
+        if not compressed:
+            keyhash = unhexlify(self._pubkeyhash + hexlify(
+                new('ripemd160', sha256(self._pubkey).digest()).
+                digest())
+                               )
+        else:
+            keyhash = unhexlify(self._pubkeyhash + hexlify(
+                new('ripemd160', sha256(self._pubkey_compressed).digest()).
+                digest())
+                               )
 
         checksum = sha256(
-            sha256(step1).digest()
+            sha256(keyhash).digest()
             ).hexdigest()[0:8]
 
-        return b58encode(step1 + unhexlify(checksum))
+        return b58encode(keyhash + unhexlify(checksum))
+
+    @staticmethod
+    def check_wif(wif):
+        '''check if WIF is properly formated.'''
+
+        b58_wif = b58decode(wif)
+        check = b58_wif[-4:]
+        checksum = sha256(sha256(b58_wif[:-4]).digest()).digest()[0:4]
+        return checksum == check
 
     def to_wif(self, compressed=False):
         '''convert raw private key to WIF'''
 
-        extkey = self._wif_prefix + self.privkey
+        extkey = self._wif_prefix + hexlify(self._privkey)
         if compressed:
             extkey += b'01'
-        extcheck = unhexlify(extkey) + sha256(sha256(unhexlify(extkey)).digest()).digest()[0:4]
-        return b58encode(extcheck)
 
-    @staticmethod
-    def wif_to_privkey(wif):
+        extcheck = unhexlify(extkey) + sha256(sha256(unhexlify(extkey
+                                                              )).digest()).digest()[0:4]
+        wif = b58encode(extcheck)
+
+        assert self.check_wif(wif)
+        return wif
+
+    def wif_to_privkey(self, wif):
         '''import WIF'''
 
+        assert self.check_wif(wif)
         b58_wif = b58decode(wif)
 
         if len(wif) == 51:
@@ -100,5 +119,4 @@ class Kutil:
     def verify(self, message, signature):
         '''verify >message< against >signature<'''
 
-        return self.keypair.pubkey.ecdsa_verify(message, signature)
-
+        return self.keypair.pubkey.ecdsa_verify(message.encode('utf-8'), signature)
