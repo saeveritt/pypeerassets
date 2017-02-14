@@ -59,7 +59,7 @@ class KutilTestCase(unittest.TestCase):
 
         WIF = "cVzLwfaC59g5CQuM1qCHiYTeWNWpHPuPGpnoXciV7Mv3vjgp8vZx"
         string = "hello world."
-        signature = "IAO8Yt7+tVD2XEB7b6lI78c+TVeDCFhSAqgbIKVjnHW3vpOz/zkkBs/ZxlfQW/IIZK/9ZrpIQmmMiQ9MLKY83NU="
+        signature = "QJ8Ux5KKvvnFX4+SS3XumtKTJ+5kdol5ph5z7a4kFB9ORRzECICnDYp9qQf6hSv8jWY1O7SnIbyOVzCJD/7DdWw="
 
         mykey = Kutil(wif=WIF)
         self.assertEqual(mykey.sign_message(string), signature)
