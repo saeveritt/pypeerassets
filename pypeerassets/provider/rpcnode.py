@@ -20,6 +20,9 @@ class RpcNode(Client):
         utxo = []
         utxo_sum = float(-0.01) ## starts from negative due to minimal fee
         for tx in sorted(self.listunspent(address=address), key=itemgetter('confirmations')):
+            
+            if self.getaccount(tx['address']) in ['PAprod','PAtest']:
+                continue
 
             utxo.append({
                 "txid": tx["txid"],
@@ -62,4 +65,12 @@ class RpcNode(Client):
             return [u for u in self.req("listunspent", [minconf, maxconf]) if u["address"] == address]
         else:
             return self.req("listunspent", [minconf, maxconf])
+
+    def getaccount(self, address=None):
+        '''list UTXOs
+        modified version to allow filtering by address.
+        '''
+        assert address is not None, 'Input address required.'
+        
+        return self.req("getaccount", [address])
 
