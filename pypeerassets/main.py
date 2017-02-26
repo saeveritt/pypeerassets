@@ -154,13 +154,16 @@ def deck_transfer(deck: Deck, inputs: list, change_address: str) -> bytes:
 def postprocess_card(raw_card: dict, raw_tx: str, sender: str, vouts: list, deck: Deck) -> list:
     '''Postprocessing of all the relevant card transfer information and creation of CardTransfer object.'''
 
-    nderror = {"error": "Number of decimals does not match."}
+    nderror = {"error": "Number of decimals does not match.", "txid": raw_tx["txid"]}
 
     _card = {}
     _card["version"] = raw_card["version"]
     _card["number_of_decimals"] = raw_card["number_of_decimals"]
     ## check if card number of decimals matches the deck atribute
-    assert _card["number_of_decimals"] == deck.number_of_decimals, nderror
+    if _card["number_of_decimals"] == deck.number_of_decimals:
+        pass
+    else:
+        print(nderror)
 
     _card["deck"] = deck
     _card["txid"] = raw_tx["txid"]
