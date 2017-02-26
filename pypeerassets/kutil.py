@@ -34,6 +34,8 @@ class Kutil:
 
         if network:
             self.load_network_parameters(network)
+        else:
+            self.load_network_parameters('tppc') # Set to tppc if network parameter is not provided
 
         self._privkey = self.keypair.private_key
         self._pubkey = self.keypair.pubkey.serialize(compressed=False)
